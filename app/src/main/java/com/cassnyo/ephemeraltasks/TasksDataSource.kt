@@ -1,76 +1,73 @@
 package com.cassnyo.ephemeraltasks
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.cassnyo.ephemeraltasks.extension.iterator
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onStart
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.UUID
 
 class TasksDataSource(
-    private val context: Context,
+    context: Context,
 ) {
 
     private val sharedPreferences = context.applicationContext.getSharedPreferences(TASKS_FILE, Context.MODE_PRIVATE)
 
-    fun observeTasks(): Flow<List<Task>> {
-        val serializedTasks = sharedPreferences
-            .getString(TASKS_KEY, null)
+    fun observeTasks(): Flow<List<Task>> = flow {
+        emit(sharedPreferences.getTaskList())
+    }.onStart {
+        emit(emptyList())
+    }.distinctUntilChanged()
 
-        return if (serializedTasks == null) {
-            flowOf(emptyList())
-        } else {
-            flowOf(deserializeTasks(serializedTasks))
-        }
-    }
-
-    fun addTask(task: Task) {
-        val jsonTask = task.toJSONTask()
-        val jsonTasks = sharedPreferences
-            .getString(TASKS_KEY, "[]")
-            ?.let { json ->
-                val array = JSONArray(json)
-                array.put(array.length(), jsonTask)
-                array.toString()
-            }
-
-        sharedPreferences
-            .edit {
-                putString(TASKS_KEY, jsonTasks)
-            }
+    fun addTask(taskDescription: String) {
+        val newTask = Task(
+            id = UUID.randomUUID().toString(),
+            description = taskDescription,
+            completed = false,
+        )
+        val updatedTasks = sharedPreferences
+            .getTaskList()
+            .toMutableList()
+            .apply { add(newTask) }
+        sharedPreferences.putTaskList(updatedTasks)
     }
 
     fun updateTask(task: Task) {
-        // TODO
+        val updatedTasks = sharedPreferences
+            .getTaskList()
+            .toMutableList()
+            .apply {
+                val index = indexOfFirst { it.id == task.id }
+                this[index] = task
+            }
+        sharedPreferences.putTaskList(updatedTasks)
     }
 
-    private fun Task.toJSONTask() = JSONObject().apply {
-        put(TASK_DESCRIPTION_PROPERTY, description)
-        put(TASK_COMPLETED_PROPERTY, (if (completed) 1 else 0))
-    }
+    private fun SharedPreferences.getTaskList(): List<Task> {
+        val jsonTasks = getString(TASKS_KEY, null) ?: return emptyList()
+        val jsonArray = JSONArray(jsonTasks)
 
-    private fun deserializeTasks(json: String): List<Task> {
-        val tasks = mutableListOf<Task>()
-        val array = JSONArray(json)
-        (0 until array.length()).forEach {index ->
-            val jsonTask = array.getJSONObject(index)
-            tasks.add(
-                Task(
-                    jsonTask.getString(TASK_DESCRIPTION_PROPERTY),
-                    jsonTask.getInt(TASK_COMPLETED_PROPERTY) == 1
-                )
-            )
+        val taskList = mutableListOf<Task>()
+        for (jsonObject in jsonArray.iterator<JSONObject>()) {
+            taskList.add(jsonObject.toTask())
         }
 
-        return tasks
+        return taskList
+    }
+
+    private fun SharedPreferences.putTaskList(taskList: List<Task>) {
+        val jsonTasks = taskList.toJsonArray().toString()
+        edit { putString(TASKS_KEY, jsonTasks) }
     }
 
     companion object {
         private const val TASKS_FILE = "tasks"
         private const val TASKS_KEY = "key_tasks"
-
-        private const val TASK_DESCRIPTION_PROPERTY = "description"
-        private const val TASK_COMPLETED_PROPERTY = "completed"
     }
 
 }

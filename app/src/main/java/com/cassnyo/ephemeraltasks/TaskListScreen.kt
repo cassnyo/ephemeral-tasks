@@ -1,6 +1,7 @@
 package com.cassnyo.ephemeraltasks
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -52,14 +53,17 @@ fun TaskListScreen(
         )
         TaskList(
             tasks = tasks,
+            onTaskClicked = { task ->
+                val updatedTask = task.copy(completed = !task.completed)
+                dataSource.updateTask(updatedTask)
+            },
             modifier = Modifier.weight(1f)
         )
         AddTaskFooter(
             description = newTaskDescription,
             onDescriptionChanged = { newTaskDescription = it },
             onAddTaskClicked = {
-                val newTask = Task(description = newTaskDescription)
-                dataSource.addTask(newTask)
+                dataSource.addTask(newTaskDescription)
                 newTaskDescription = ""
             }
         )
@@ -86,14 +90,18 @@ private fun TopAppBar(
 @Composable
 private fun TaskList(
     tasks: List<Task>,
-    modifier: Modifier = Modifier
+    onTaskClicked: (Task) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(modifier = modifier) {
         items(
             count = tasks.size,
             key = { index -> index },
         ) { index ->
-            TaskItem(task = tasks[index])
+            TaskItem(
+                task = tasks[index],
+                onClicked = onTaskClicked,
+            )
         }
     }
 }
@@ -101,12 +109,14 @@ private fun TaskList(
 @Composable
 private fun TaskItem(
     task: Task,
+    onClicked: (Task) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
             .fillMaxWidth()
+            .clickable { onClicked(task) }
             .padding(
                 horizontal = 16.dp,
                 vertical = 8.dp
@@ -114,7 +124,7 @@ private fun TaskItem(
     ) {
         Checkbox(
             checked = task.completed,
-            onCheckedChange = {}
+            onCheckedChange = { onClicked(task) }
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
