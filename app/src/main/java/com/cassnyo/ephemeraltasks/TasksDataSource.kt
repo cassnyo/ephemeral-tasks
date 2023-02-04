@@ -1,73 +1,81 @@
 package com.cassnyo.ephemeraltasks
 
 import android.content.Context
-import android.content.SharedPreferences
-import androidx.core.content.edit
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import com.cassnyo.ephemeraltasks.extension.iterator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
+
+private const val TASKS_FILE = "tasks"
+
+val Context.tasksDataStore: DataStore<Preferences> by preferencesDataStore(name = TASKS_FILE)
 
 class TasksDataSource(
     context: Context,
 ) {
 
-    private val sharedPreferences = context.applicationContext.getSharedPreferences(TASKS_FILE, Context.MODE_PRIVATE)
+    private val dataStore = context.tasksDataStore
 
-    fun observeTasks(): Flow<List<Task>> = flow {
-        emit(sharedPreferences.getTaskList())
-    }.onStart {
-        emit(emptyList())
-    }.distinctUntilChanged()
+    fun observeTasks(): Flow<List<Task>> =
+        dataStore
+            .observeTaskList()
+            .distinctUntilChanged()
 
-    fun addTask(taskDescription: String) {
+    suspend fun addTask(taskDescription: String) {
         val newTask = Task(
             id = UUID.randomUUID().toString(),
             description = taskDescription,
             completed = false,
         )
-        val updatedTasks = sharedPreferences
-            .getTaskList()
+
+        val updatedTasks = observeTasks()
+            .first()
             .toMutableList()
             .apply { add(newTask) }
-        sharedPreferences.putTaskList(updatedTasks)
+
+        dataStore.putTaskList(updatedTasks)
     }
 
-    fun updateTask(task: Task) {
-        val updatedTasks = sharedPreferences
-            .getTaskList()
+    suspend fun updateTask(task: Task) {
+        val updatedTasks = observeTasks()
+            .first()
             .toMutableList()
             .apply {
                 val index = indexOfFirst { it.id == task.id }
                 this[index] = task
             }
-        sharedPreferences.putTaskList(updatedTasks)
+        dataStore.putTaskList(updatedTasks)
     }
 
-    private fun SharedPreferences.getTaskList(): List<Task> {
-        val jsonTasks = getString(TASKS_KEY, null) ?: return emptyList()
-        val jsonArray = JSONArray(jsonTasks)
+    private fun DataStore<Preferences>.observeTaskList(): Flow<List<Task>> =
+        data.map {
+            val jsonTasks = it.get(key = PREFERENCE_TASKS) ?: return@map emptyList<Task>()
+            val jsonArray = JSONArray(jsonTasks)
 
-        val taskList = mutableListOf<Task>()
-        for (jsonObject in jsonArray.iterator<JSONObject>()) {
-            taskList.add(jsonObject.toTask())
+            val taskList = mutableListOf<Task>()
+            for (jsonObject in jsonArray.iterator<JSONObject>()) {
+                taskList.add(jsonObject.toTask())
+            }
+
+            taskList
         }
 
-        return taskList
-    }
-
-    private fun SharedPreferences.putTaskList(taskList: List<Task>) {
+    private suspend fun DataStore<Preferences>.putTaskList(taskList: List<Task>) {
         val jsonTasks = taskList.toJsonArray().toString()
-        edit { putString(TASKS_KEY, jsonTasks) }
+        edit { it[PREFERENCE_TASKS] = jsonTasks }
     }
 
     companion object {
-        private const val TASKS_FILE = "tasks"
-        private const val TASKS_KEY = "key_tasks"
+        private val PREFERENCE_TASKS = stringPreferencesKey("tasks")
     }
 
 }

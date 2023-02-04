@@ -32,6 +32,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,12 +44,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 
 @Composable
 fun TaskListScreen(
     dataSource: TasksDataSource,
     modifier: Modifier = Modifier
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val tasks by dataSource.observeTasks().collectAsState(initial = emptyList())
     var newTaskDescription by remember { mutableStateOf("") }
 
@@ -64,8 +67,10 @@ fun TaskListScreen(
             TaskList(
                 tasks = tasks,
                 onTaskClicked = { task ->
-                    val updatedTask = task.copy(completed = !task.completed)
-                    dataSource.updateTask(updatedTask)
+                    coroutineScope.launch {
+                        val updatedTask = task.copy(completed = !task.completed)
+                        dataSource.updateTask(updatedTask)
+                    }
                 },
                 modifier = Modifier
             )
@@ -74,8 +79,10 @@ fun TaskListScreen(
                 onDescriptionChanged = { newTaskDescription = it },
                 isAddTaskEnabled = newTaskDescription.isNotBlank(),
                 onAddTaskClicked = {
-                    dataSource.addTask(newTaskDescription)
-                    newTaskDescription = ""
+                    coroutineScope.launch {
+                        dataSource.addTask(newTaskDescription)
+                        newTaskDescription = ""
+                    }
                 },
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
