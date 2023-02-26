@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Checkbox
@@ -52,6 +53,8 @@ fun TaskListScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val tasks by dataSource.observeTasks().collectAsState(initial = emptyList())
+    val sortTasks = tasks.sortedBy { it.completed }
+
     var newTaskDescription by remember { mutableStateOf("") }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -59,32 +62,28 @@ fun TaskListScreen(
             title = stringResource(id = R.string.app_name),
         )
         Divider()
-        Box(
-            modifier = modifier.fillMaxSize()
-        ) {
-            TaskList(
-                tasks = tasks,
-                onTaskClicked = { task ->
-                    coroutineScope.launch {
-                        val updatedTask = task.copy(completed = !task.completed)
-                        dataSource.updateTask(updatedTask)
-                    }
-                },
-                modifier = Modifier
-            )
-            AddTaskFooter(
-                description = newTaskDescription,
-                onDescriptionChanged = { newTaskDescription = it },
-                isAddTaskEnabled = newTaskDescription.isNotBlank(),
-                onAddTaskClicked = {
-                    coroutineScope.launch {
-                        dataSource.addTask(newTaskDescription)
-                        newTaskDescription = ""
-                    }
-                },
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
-        }
+        TaskList(
+            tasks = sortTasks,
+            onTaskClicked = { task ->
+                coroutineScope.launch {
+                    val updatedTask = task.copy(completed = !task.completed)
+                    dataSource.updateTask(updatedTask)
+                }
+            },
+            modifier = Modifier.weight(1f)
+        )
+        Divider()
+        AddTaskFooter(
+            description = newTaskDescription,
+            onDescriptionChanged = { newTaskDescription = it },
+            isAddTaskEnabled = newTaskDescription.isNotBlank(),
+            onAddTaskClicked = {
+                coroutineScope.launch {
+                    dataSource.addTask(newTaskDescription)
+                    newTaskDescription = ""
+                }
+            },
+        )
     }
 }
 
@@ -116,17 +115,18 @@ private fun TaskList(
     LazyColumn(
         contentPadding = PaddingValues(
             top = 12.dp,
-            bottom = 90.dp,
+            bottom = 12.dp,
         ),
         modifier = modifier,
     ) {
         items(
-            count = tasks.size,
-            key = { index -> index },
-        ) { index ->
+            items = tasks,
+            key = { task -> task.id },
+        ) { task ->
             TaskItem(
-                task = tasks[index],
+                task = task,
                 onClicked = onTaskClicked,
+                modifier = Modifier.animateItemPlacement()
             )
         }
     }
@@ -171,51 +171,48 @@ private fun AddTaskFooter(
     onAddTaskClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier) {
-        Divider()
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = modifier
-                .padding(
-                    vertical = 4.dp,
-                    horizontal = 16.dp
-                )
-        ) {
-            OutlinedTextField(
-                value = description,
-                onValueChange = onDescriptionChanged,
-                placeholder = {
-                    Text(
-                        text = "Enter your task here",
-                    )
-                },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.Sentences,
-                    autoCorrect = false,
-                    imeAction = ImeAction.Done,
-                ),
-                keyboardActions = KeyboardActions(
-                    onDone = { onAddTaskClicked() }
-                ),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent,
-                ),
-                singleLine = true,
-                modifier = Modifier.weight(1f),
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .padding(
+                vertical = 4.dp,
+                horizontal = 16.dp
             )
-            Spacer(modifier = Modifier.width(4.dp))
-            IconButton(
-                onClick = { onAddTaskClicked() },
-                enabled = isAddTaskEnabled
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.AddCircleOutline,
-                    tint = if (isAddTaskEnabled) MaterialTheme.colors.primary else Color.LightGray,
-                    contentDescription = "Add new task",
-                    modifier = Modifier.size(32.dp)
+    ) {
+        OutlinedTextField(
+            value = description,
+            onValueChange = onDescriptionChanged,
+            placeholder = {
+                Text(
+                    text = "Enter your task here",
                 )
-            }
+            },
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                autoCorrect = false,
+                imeAction = ImeAction.Done,
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = { onAddTaskClicked() }
+            ),
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                focusedBorderColor = Color.Transparent,
+                unfocusedBorderColor = Color.Transparent,
+            ),
+            singleLine = true,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        IconButton(
+            onClick = { onAddTaskClicked() },
+            enabled = isAddTaskEnabled
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.AddCircleOutline,
+                tint = if (isAddTaskEnabled) MaterialTheme.colors.primary else Color.LightGray,
+                contentDescription = "Add new task",
+                modifier = Modifier.size(32.dp)
+            )
         }
     }
 }
