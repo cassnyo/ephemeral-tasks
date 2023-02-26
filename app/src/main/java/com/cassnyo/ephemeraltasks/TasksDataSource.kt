@@ -68,6 +68,10 @@ class TasksDataSource(
         dataStore.putTaskList(updatedTasks)
     }
 
+    suspend fun clearTasks(): Unit = withContext(Dispatchers.IO) {
+        dataStore.edit { it.clear() }
+    }
+
     private fun DataStore<Preferences>.observeTaskList(): Flow<List<Task>> =
         data.map {
             val jsonTasks = it.get(key = PREFERENCE_TASKS) ?: return@map emptyList<Task>()

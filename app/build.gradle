@@ -32,6 +32,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = '1.8'
+        freeCompilerArgs = [
+                "-opt-in=androidx.compose.foundation.ExperimentalFoundationApi"
+        ]
     }
     buildFeatures {
         compose true
@@ -61,6 +64,8 @@ dependencies {
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
+
+    implementation 'androidx.work:work-runtime-ktx:2.8.0'
 
     implementation "androidx.datastore:datastore-preferences:1.0.0"
     implementation "com.google.accompanist:accompanist-systemuicontroller:0.28.0"
