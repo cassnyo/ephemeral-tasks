@@ -1,4 +1,4 @@
-package com.cassnyo.ephemeraltasks
+package com.cassnyo.ephemeraltasks.ui.tasks
 
 import org.json.JSONArray
 import org.json.JSONObject

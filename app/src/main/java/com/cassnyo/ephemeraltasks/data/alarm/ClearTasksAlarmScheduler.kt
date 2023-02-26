@@ -1,4 +1,4 @@
-package com.cassnyo.ephemeraltasks.common
+package com.cassnyo.ephemeraltasks.data.alarm
 
 import android.app.AlarmManager
 import android.app.PendingIntent

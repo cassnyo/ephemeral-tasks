@@ -1,4 +1,4 @@
-package com.cassnyo.ephemeraltasks
+package com.cassnyo.ephemeraltasks.ui.tasks
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -44,6 +44,8 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cassnyo.ephemeraltasks.R
+import com.cassnyo.ephemeraltasks.data.datasource.TasksDataSource
 import kotlinx.coroutines.launch
 
 @Composable

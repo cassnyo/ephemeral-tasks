@@ -1,8 +1,8 @@
 package com.cassnyo.ephemeraltasks
 
 import android.app.Application
-import com.cassnyo.ephemeraltasks.common.AlarmScheduler
-import com.cassnyo.ephemeraltasks.common.ClearTasksAlarmScheduler
+import com.cassnyo.ephemeraltasks.data.alarm.AlarmScheduler
+import com.cassnyo.ephemeraltasks.data.alarm.ClearTasksAlarmScheduler
 
 class EphemeralTasksApp : Application() {
 

@@ -1,9 +1,9 @@
-package com.cassnyo.ephemeraltasks.common
+package com.cassnyo.ephemeraltasks.data.alarm
 
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.cassnyo.ephemeraltasks.TasksDataSource
+import com.cassnyo.ephemeraltasks.data.datasource.TasksDataSource
 
 class ClearTasksWorker(
     private val context: Context,

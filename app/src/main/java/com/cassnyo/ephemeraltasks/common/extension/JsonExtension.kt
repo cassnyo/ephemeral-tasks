@@ -1,4 +1,4 @@
-package com.cassnyo.ephemeraltasks.extension
+package com.cassnyo.ephemeraltasks.common.extension
 
 import org.json.JSONArray
 

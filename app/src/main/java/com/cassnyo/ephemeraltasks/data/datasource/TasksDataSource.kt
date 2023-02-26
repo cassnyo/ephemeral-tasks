@@ -1,4 +1,4 @@
-package com.cassnyo.ephemeraltasks
+package com.cassnyo.ephemeraltasks.data.datasource
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -6,7 +6,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.cassnyo.ephemeraltasks.extension.iterator
+import com.cassnyo.ephemeraltasks.common.extension.iterator
+import com.cassnyo.ephemeraltasks.ui.tasks.Task
+import com.cassnyo.ephemeraltasks.ui.tasks.toJsonArray
+import com.cassnyo.ephemeraltasks.ui.tasks.toTask
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
